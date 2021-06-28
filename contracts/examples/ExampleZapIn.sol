@@ -9,6 +9,8 @@ import "../libraries/DMMLibrary.sol";
 import "../interfaces/IDMMPool.sol";
 import "../interfaces/IDMMFactory.sol";
 
+import "hardhat/console.sol";
+
 /// @dev detail here: https://hackmd.io/vdqxJx8STNqPm0LG8vGWaw
 contract ExampleZapIn {
     using SafeERC20 for IERC20;
@@ -45,6 +47,17 @@ contract ExampleZapIn {
             _swap(amountSwap, amountOutput, tokenIn, tokenOut, pool, address(this));
             tokenIn.safeTransferFrom(msg.sender, pool, userIn.sub(amountSwap));
             tokenOut.safeTransfer(pool, amountOutput);
+
+            // print out to show that the ratio of token 0 and token 1 added is equal to the ratio of real reserves
+            (uint256 reserveIn, uint256 reserveOut) = DMMLibrary.getReserves(
+                pool,
+                tokenIn,
+                tokenOut
+            );
+            console.log(
+                userIn.sub(amountSwap),
+                DMMLibrary.quote(amountOutput, reserveOut, reserveIn)
+            );
         }
 
         return IDMMPool(pool).mint(msg.sender);

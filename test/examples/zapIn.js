@@ -27,10 +27,19 @@ contract('ExampleZapIn', accounts => {
       accounts[0],
       Helper.MaxUint256,
       {
-        value: Helper.precisionUnits.mul(new BN(30))
+        value: Helper.expandTo18Decimals(30)
       }
     );
     const poolAddress = (await factory.getPools(token.address, weth.address))[0];
+    // swap to change the ratio of the pool a bit
+    await router.swapExactETHForTokens(
+      new BN(0),
+      [poolAddress],
+      [weth.address, token.address],
+      accounts[0],
+      Helper.MaxUint256,
+      {value: Helper.expandTo18Decimals(7)}
+    );
 
     let zapIn = await ExampleZapIn.new(factory.address);
     await token.approve(zapIn.address, Helper.MaxUint256, {from: accounts[1]});
@@ -39,8 +48,5 @@ contract('ExampleZapIn', accounts => {
     await token.transfer(accounts[1], userIn);
 
     await zapIn.zapIn(token.address, weth.address, userIn, poolAddress, {from: accounts[1]});
-
-    let pool = await DMMPool.at(poolAddress);
-    console.log(await pool.balanceOf(accounts[1]))
   });
 });
